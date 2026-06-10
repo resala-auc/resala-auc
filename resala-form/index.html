@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Resala AUC Recruitment Form</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="page-shell">
+    <section class="hero-card">
+      <div class="hero-top">
+        <div class="logo-wrap">
+          <img src="assets/resala-logo.svg" alt="Resala AUC Logo" />
+        </div>
+        <div class="social-pill">@resalaauc</div>
+      </div>
+
+      <p class="eyebrow">Resala AUC Recruitment</p>
+      <h1>Turn Your Time Into Impact.</h1>
+      <p class="hero-text">Join the students behind some of AUC's largest community service initiatives — from Ramadan packs and Keswa to visits and children’s events — and help create meaningful change beyond campus.</p>
+
+      <div class="impact-grid impact-numbers">
+        <div><strong>6,200+</strong><span>Ramadan packs delivered through student-led planning.</span></div>
+        <div><strong>67+ tons</strong><span>Supplies managed, moved, sorted, and delivered.</span></div>
+        <div><strong>Thousands</strong><span>Of lives reached through organized service work.</span></div>
+      </div>
+
+      <div class="why-card">
+        <p class="mini-eyebrow">Why Resala?</p>
+        <h3>Not another student activity.</h3>
+        <p>Resala AUC is where students learn how to lead real projects with real consequences: logistics, fundraising, outreach, teamwork, and service — all while creating direct impact.</p>
+      </div>
+
+      <div class="quote-card">
+        <span>“</span>
+        <p>We don’t just organize events. We organize impact.</p>
+      </div>
+    </section>
+
+    <form id="resalaForm" class="form-card">
+      <div class="form-header">
+        <div>
+          <p class="mini-eyebrow">Application Form</p>
+          <h2>Start your application</h2>
+        </div>
+        <span id="stepLabel">Step 1 of 3</span>
+      </div>
+
+      <div class="progress"><div id="progressBar"></div></div>
+
+      <section class="form-section active" data-step="1">
+        <h3>Personal Information</h3>
+        <div class="grid">
+          <label>Full Name<input name="fullName" required placeholder="Youssef Ibrahim" /></label>
+          <label>AUC ID<input name="aucId" required placeholder="900xxxxx" /></label>
+          <label>Email<input name="email" type="email" required placeholder="name@aucegypt.edu" /></label>
+          <label>Phone Number<input name="phone" required placeholder="01xxxxxxxxx" /></label>
+          <label>Major<input name="major" required placeholder="Computer Engineering" /></label>
+          <label>Academic Year
+            <select name="year" required>
+              <option value="">Select year</option>
+              <option>Freshman</option><option>Sophomore</option><option>Junior</option><option>Senior</option><option>Graduate</option>
+            </select>
+          </label>
+        </div>
+      </section>
+
+      <section class="form-section" data-step="2">
+        <h3>Role Preference</h3>
+        <label>Position Applying For
+          <select name="position" required>
+            <option value="">Select position</option>
+            <option>Treasurer</option>
+            <option>Operations</option>
+            <option>HR</option>
+            <option>Marketing</option>
+            <option>Visits</option>
+            <option>Keswa</option>
+            <option>Other</option>
+          </select>
+        </label>
+        <label>Why do you want to be part of Resala AUC?
+          <textarea name="whyJoin" required rows="4" placeholder="Tell us what makes Resala meaningful to you..."></textarea>
+        </label>
+        <label>How can you contribute to real impact?
+          <textarea name="roleFit" required rows="4" placeholder="Start your applicationr commitment, skills, or mindset..."></textarea>
+        </label>
+      </section>
+
+      <section class="form-section" data-step="3">
+        <h3>Experience & Availability</h3>
+        <label>Relevant experience, skills, or previous volunteering
+          <textarea name="experience" rows="4" placeholder="Mention any volunteering, club, leadership, finance, design, logistics, teamwork, or community service experience..."></textarea>
+        </label>
+        <div class="grid">
+          <label>Hours available per week<input name="hours" type="number" min="1" max="40" required placeholder="5" /></label>
+          <label>Preferred interview time<input name="interviewTime" placeholder="Example: Sunday after 3 PM" /></label>
+        </div>
+        <label class="checkbox"><input type="checkbox" name="commitment" required /> I understand that Resala work requires commitment, responsibility, teamwork, and follow-through.</label>
+      </section>
+
+      <div class="actions">
+        <button type="button" id="prevBtn" class="secondary" hidden>Back</button>
+        <button type="button" id="nextBtn">Next</button>
+        <button type="submit" id="submitBtn" hidden>Submit Application</button>
+      </div>
+
+      <p id="statusMessage" class="status"></p>
+    </form>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
