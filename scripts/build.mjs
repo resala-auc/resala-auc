@@ -8,6 +8,7 @@ await mkdir("dist", { recursive: true });
 await mkdir("dist/apply", { recursive: true });
 await writeFile("dist/index.html", renderPage(), "utf8");
 await writeFile("dist/apply/index.html", renderApplyPage(), "utf8");
+await writeFile("dist/.nojekyll", "", "utf8");
 await cp("src/styles.css", "dist/styles.css");
 await cp("src/app.js", "dist/app.js");
 await cp("src/spreadsheet-config.js", "dist/spreadsheet-config.js");
