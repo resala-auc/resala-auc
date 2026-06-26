@@ -1473,6 +1473,7 @@ async function loadAdminApplicants(token: string): Promise<{
     fullName: row[1] ?? "",
     aucEmail: row[2] ?? "",
     studentId: row[3] ?? "",
+    phone: row[6] ?? "",
     roleAppliedFor: row[7] ?? "",
     secondPreference: row[17] ?? "",
     interviewSlot: row[14] ?? "",

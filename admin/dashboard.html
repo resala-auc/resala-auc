@@ -680,6 +680,7 @@
             <div class="name">${escHtml(r.fullName)}</div>
             <div class="meta">${escHtml(r.aucEmail)}</div>
             <div class="meta">${escHtml(r.studentId)}</div>
+            <div class="meta">${escHtml(r.phone || 'No phone')}</div>
           </td>
           <td>
             <div class="role-main">${escHtml(r.roleAppliedFor)}</div>
@@ -718,6 +719,7 @@
       ? allReservations.filter(r =>
           normalize(r.fullName).includes(q) ||
           normalize(r.aucEmail).includes(q) ||
+          normalize(r.phone).includes(q) ||
           normalize(r.roleAppliedFor).includes(q))
       : allReservations;
     renderResTable(rows);
@@ -863,6 +865,7 @@
         <td>
           <div class="name">${escHtml(r.fullName)}</div>
           <div class="meta">${escHtml(r.aucEmail)}</div>
+          <div class="meta">${escHtml(r.phone || 'No phone')}</div>
         </td>
         <td><div class="role-main">${escHtml(r.roleAppliedFor)}</div></td>
         <td><div class="role-second">${escHtml(r.secondPreference || '—')}</div></td>
@@ -885,6 +888,7 @@
       ? allApplicants.filter(r =>
           normalize(r.fullName).includes(q) ||
           normalize(r.aucEmail).includes(q) ||
+          normalize(r.phone).includes(q) ||
           normalize(r.roleAppliedFor).includes(q))
       : allApplicants;
     renderScoreTable(rows);
@@ -945,6 +949,7 @@
           <div class="rank-info">
             <div class="rank-name">${escHtml(a.fullName)}</div>
             <div class="rank-email">${escHtml(a.aucEmail)}</div>
+            <div class="rank-email">${escHtml(a.phone || 'No phone')}</div>
             <div class="rank-slot">${escHtml(a.interviewSlot || 'No slot')}</div>
             <div class="role-second" style="margin-top:3px;">1st: ${escHtml(a.roleAppliedFor)} · 2nd: ${escHtml(a.secondPreference || '—')}</div>
             ${a.notesUrl ? `<div class="notes-link"><a href="${escHtml(a.notesUrl)}" target="_blank" rel="noopener">📄 Interview notes</a></div>` : ''}
