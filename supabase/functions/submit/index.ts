@@ -131,6 +131,14 @@ type AdminResetPayload = {
   studentId?: string;
 };
 
+type AdminAddTestSlotPayload = {
+  mode: "admin-add-test-slot";
+  date: string;
+  startTime: string;
+  endTime?: string;
+  label?: string;
+};
+
 type ConfirmationEmailTemplate = {
   subject: string;
   body: string;
@@ -242,6 +250,19 @@ Deno.serve(async (request) => {
       return jsonResponse({ ok: true, ...result });
     }
 
+    if (isAdminAddTestSlotPayload(payload)) {
+      authorizeAdminReset(request);
+
+      if (!SHEET_ID) {
+        throw new Error("SHEET_ID is not configured.");
+      }
+
+      const token = await getGoogleAccessToken();
+      const result = await addTestInterviewSlot(token, payload);
+
+      return jsonResponse({ ok: true, ...result });
+    }
+
     if (isTaskSubmissionPayload(payload)) {
       validateTaskSubmission(payload);
 
@@ -286,21 +307,33 @@ Deno.serve(async (request) => {
   }
 });
 
-async function parsePayload(request: Request): Promise<ApplicationPayload | TaskSubmissionPayload | AdminResetPayload> {
+async function parsePayload(
+  request: Request
+): Promise<ApplicationPayload | TaskSubmissionPayload | AdminResetPayload | AdminAddTestSlotPayload> {
   const text = await request.text();
   if (!text.trim()) {
     throw new Error("Missing submission body.");
   }
 
-  return JSON.parse(text) as ApplicationPayload | TaskSubmissionPayload | AdminResetPayload;
+  return JSON.parse(text) as ApplicationPayload | TaskSubmissionPayload | AdminResetPayload | AdminAddTestSlotPayload;
 }
 
-function isTaskSubmissionPayload(payload: ApplicationPayload | TaskSubmissionPayload | AdminResetPayload): payload is TaskSubmissionPayload {
+function isTaskSubmissionPayload(
+  payload: ApplicationPayload | TaskSubmissionPayload | AdminResetPayload | AdminAddTestSlotPayload
+): payload is TaskSubmissionPayload {
   return (payload as TaskSubmissionPayload).mode === "task-submission";
 }
 
-function isAdminResetPayload(payload: ApplicationPayload | TaskSubmissionPayload | AdminResetPayload): payload is AdminResetPayload {
+function isAdminResetPayload(
+  payload: ApplicationPayload | TaskSubmissionPayload | AdminResetPayload | AdminAddTestSlotPayload
+): payload is AdminResetPayload {
   return (payload as AdminResetPayload).mode === "admin-reset-test";
+}
+
+function isAdminAddTestSlotPayload(
+  payload: ApplicationPayload | TaskSubmissionPayload | AdminResetPayload | AdminAddTestSlotPayload
+): payload is AdminAddTestSlotPayload {
+  return (payload as AdminAddTestSlotPayload).mode === "admin-add-test-slot";
 }
 
 function authorizeAdminReset(request: Request): void {
@@ -1170,6 +1203,46 @@ async function resetTestApplicant(token: string, payload: AdminResetPayload, app
     deletedApplications: applicationMatches.length,
     clearedSlots,
     deletedCalendarEvents
+  };
+}
+
+async function addTestInterviewSlot(
+  token: string,
+  payload: AdminAddTestSlotPayload
+): Promise<{ slotId: string; label: string; rowIndex: number }> {
+  const date = String(payload.date ?? "").trim();
+  const startTime = String(payload.startTime ?? "").trim();
+  const endTime = String(payload.endTime ?? "").trim() || addMinutesToTime(startTime, 30);
+  const label = String(payload.label ?? "").trim() || buildSlotLabel(date, startTime);
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    throw new Error("Invalid slot date.");
+  }
+
+  if (!startTime) {
+    throw new Error("Invalid slot start time.");
+  }
+
+  await ensureSlotSheets(token);
+
+  const slotId = `test-slot-${date}-${startTime.replace(/[^0-9A-Za-z]/g, "").toLowerCase()}`;
+  const row = [slotId, date, startTime, endTime, label, 1, "TRUE", "", ""];
+  await sheetsFetch(token, "POST", `${sheetRange(SLOT_SHEET_NAME, "A:I")}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`, {
+    values: [row]
+  });
+
+  const slotResponse = await sheetsFetch(token, "GET", `${sheetRange(SLOT_SHEET_NAME, "A2:I")}`);
+  const slotRows = (await slotResponse.json()).values ?? [];
+  const rowIndex = slotRows.findIndex((sheetRow: string[]) => normalize(sheetRow[0]) === normalize(slotId)) + 2;
+
+  if (rowIndex < 2) {
+    throw new Error("Could not confirm inserted test slot.");
+  }
+
+  return {
+    slotId,
+    label,
+    rowIndex
   };
 }
 
