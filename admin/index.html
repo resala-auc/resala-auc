@@ -83,7 +83,6 @@
     .btn:not(:disabled):hover { opacity: 0.88; }
     .btn-primary { background: #0d2b45; color: #fff; }
     .btn-accent  { background: #f5c46b; color: #0d2b45; }
-    .btn-success { background: #16a34a; color: #fff; }
     .btn-sm      { padding: 7px 14px; font-size: 13px; }
 
     .notice {
@@ -636,7 +635,7 @@
             value="${escHtml(r.notesUrl)}" placeholder="Paste Google Doc URL">
         </td>
         <td>
-          <button class="btn btn-success btn-sm" id="save-btn-${r.rowIndex}"
+          <button class="btn btn-primary btn-sm" id="save-btn-${r.rowIndex}"
             onclick="saveScore(${r.rowIndex}, '${escHtml(r.aucEmail)}')">Save</button>
           <div id="row-notice-${r.rowIndex}" style="margin-top:6px;font-size:12px;"></div>
         </td>
