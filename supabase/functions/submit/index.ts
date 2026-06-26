@@ -540,7 +540,7 @@ function buildConfirmationEmailTemplate(
   const slot = payload.interviewSlotLabel ?? payload.interviewSlot;
   const taskDeadline = formatLocalDateTimeLabel(subtractMinutesFromLocalDateTime(reservation.slot.startDateTime, 30));
   const submissionLine = getTaskSubmissionLine();
-  const subject = "Resala AUC: your application was received";
+  const subject = "Resala AUC: your application";
   const body = [
     `Hi ${payload.fullName},`,
     "",
@@ -557,7 +557,7 @@ function buildConfirmationEmailTemplate(
     `Task deadline: ${taskDeadline || "30 minutes before your interview"}.`,
     submissionLine,
     "",
-    "The task PDFs are attached when Drive export is available. The Google Doc and PDF links above are included as a backup.",
+    "The task PDFs are attached when Drive export is available. The Google Doc links above are included as a backup.",
     "If anything feels unclear, just reply to this email and we will help.",
     "",
     "Best,",
@@ -573,7 +573,6 @@ function buildConfirmationEmailTemplate(
       secondPreference: payload.secondPreference,
       slot,
       taskDeadline,
-      submissionLine,
       meetLink: reservation.meetLink,
       tasks
     })
@@ -586,7 +585,6 @@ function buildConfirmationEmailHtml({
   secondPreference,
   slot,
   taskDeadline,
-  submissionLine,
   meetLink,
   tasks
 }: {
@@ -595,7 +593,6 @@ function buildConfirmationEmailHtml({
   secondPreference: string;
   slot: string;
   taskDeadline: string;
-  submissionLine: string;
   meetLink: string;
   tasks: ApplicantTaskDocument[];
 }): string {
@@ -643,11 +640,11 @@ function buildConfirmationEmailHtml({
                     <td style="background:#0d2b45;border-radius:14px;padding:16px 18px;color:#ffffff;">
                       <div style="font-size:14px;color:#f5c46b;font-weight:bold;letter-spacing:.8px;text-transform:uppercase;">Task deadline</div>
                       <div style="font-size:15px;line-height:1.7;color:#ffffff;margin-top:8px;">Submit both tasks by ${escapeHtml(taskDeadline || "30 minutes before your interview")}.</div>
-                      <div style="font-size:14px;line-height:1.55;color:#dbe7ef;margin-top:8px;">${escapeHtml(submissionLine)}</div>
+                      ${buildSubmissionActionHtml()}
                     </td>
                   </tr>
                 </table>
-                <p style="margin:0 0 8px;font-size:15px;line-height:1.6;color:#4b5563;">The task PDFs are attached when Drive export is available. The Google Doc and PDF links above are included as a backup.</p>
+                <p style="margin:0 0 8px;font-size:15px;line-height:1.6;color:#4b5563;">The task PDFs are attached when Drive export is available. The Google Doc buttons above are included as a backup.</p>
                 <p style="margin:0 0 22px;font-size:15px;line-height:1.6;color:#4b5563;">If anything feels unclear, just reply to this email and we will help.</p>
                 <p style="margin:0 0 4px;font-size:16px;line-height:1.6;color:#172033;font-weight:bold;">Be the first step toward someone's better life.</p>
                 <p style="margin:0 0 18px;font-size:16px;line-height:1.6;">Best,<br>Resala AUC</p>
@@ -755,8 +752,7 @@ function getApplicantTaskDocuments(firstPreference: string, secondPreference: st
 function formatTaskDocumentTextLines(tasks: ApplicantTaskDocument[]): string[] {
   return tasks.flatMap((task) => [
     `- ${task.preferenceLabel}: ${task.roleName}`,
-    `  Google Doc: ${task.documentUrl || "Task document link is not configured."}`,
-    `  PDF: ${task.pdfUrl || "Task PDF link is not configured."}`
+    `  Google Doc: ${task.documentUrl || "Task document link is not configured."}`
   ]);
 }
 
@@ -764,17 +760,14 @@ function buildTaskDocumentsHtml(tasks: ApplicantTaskDocument[]): string {
   const rows = tasks
     .map((task) => {
       const docLink = task.documentUrl
-        ? `<a href="${escapeHtml(task.documentUrl)}" style="color:#0d2b45;font-size:15px;font-weight:bold;text-decoration:underline;">Open Google Doc</a>`
+        ? `<a href="${escapeHtml(task.documentUrl)}" style="display:inline-block;background:#0d2b45;color:#ffffff;font-size:14px;font-weight:bold;text-decoration:none;border-radius:10px;padding:10px 14px;">Open Google Doc</a>`
         : `<span style="color:#64748b;font-size:15px;">Google Doc link is not configured.</span>`;
-      const pdfLink = task.pdfUrl
-        ? `<a href="${escapeHtml(task.pdfUrl)}" style="color:#0d2b45;font-size:15px;font-weight:bold;text-decoration:underline;margin-left:12px;">Download PDF</a>`
-        : `<span style="color:#64748b;font-size:15px;margin-left:12px;">PDF link is not configured.</span>`;
 
       return `<tr>
         <td style="padding:14px 0;border-top:1px solid #e6edf2;">
           <div style="font-size:13px;color:#64748b;text-transform:uppercase;letter-spacing:.8px;font-weight:bold;margin-bottom:5px;">${escapeHtml(task.preferenceLabel)}</div>
           <div style="font-size:17px;line-height:1.35;color:#172033;font-weight:bold;margin-bottom:8px;">${escapeHtml(task.roleName)}</div>
-          <div>${docLink}${pdfLink}</div>
+          <div>${docLink}</div>
         </td>
       </tr>`;
     })
@@ -798,6 +791,17 @@ function getTaskSubmissionLine(): string {
   }
 
   return "Submit both completed tasks by replying to this email with your files or links.";
+}
+
+function buildSubmissionActionHtml(): string {
+  const submissionUrl = TASK_SUBMISSION_URL.trim();
+  if (!submissionUrl) {
+    return `<div style="font-size:14px;line-height:1.55;color:#dbe7ef;margin-top:8px;">Submit both completed tasks by replying to this email with your files or links.</div>`;
+  }
+
+  return `<div style="margin-top:14px;">
+    <a href="${escapeHtml(submissionUrl)}" style="display:inline-block;background:#f5c46b;color:#0d2b45;font-size:14px;font-weight:bold;text-decoration:none;border-radius:10px;padding:11px 16px;">Submit tasks</a>
+  </div>`;
 }
 
 async function getTaskPdfAttachments(tasks: ApplicantTaskDocument[]): Promise<EmailAttachment[]> {
