@@ -477,6 +477,7 @@
               <th>1st Preference</th>
               <th>2nd Preference</th>
               <th>Slot</th>
+              <th>Task</th>
               <th>1st Score</th>
               <th>2nd Score</th>
               <th>Notes Doc</th>
@@ -793,7 +794,7 @@
         <div class="qa-q">${escHtml(qa.q)}</div>
         <div class="qa-a ${qa.a ? '' : 'empty-answer'}">${qa.a ? escHtml(qa.a) : 'No answer provided.'}</div>
       </div>`
-    ).join('');
+    ).join('') + buildTaskSection(r);
 
     document.getElementById('modal').classList.add('open');
     document.body.style.overflow = 'hidden';
@@ -807,6 +808,41 @@
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 
   // ── score tab ──────────────────────────────────────────────────────────────
+
+  function taskCell(r) {
+    const status = r.taskSubmissionStatus || r.firstPreferenceTaskLink ? 'Submitted' : '';
+    const hasLinks = r.firstPreferenceTaskLink || r.secondPreferenceTaskLink;
+    if (!hasLinks && !status) return '<span style="color:#94a3b8;font-size:12px;">—</span>';
+    const badge = status
+      ? `<div style="margin-bottom:4px;"><span class="status-badge status-done" style="font-size:10px;">${escHtml(status)}</span></div>`
+      : '';
+    const link1 = r.firstPreferenceTaskLink
+      ? `<a href="${escHtml(r.firstPreferenceTaskLink)}" target="_blank" rel="noopener" style="display:block;font-size:11px;color:#2563eb;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px;">📄 1st task</a>`
+      : '';
+    const link2 = r.secondPreferenceTaskLink
+      ? `<a href="${escHtml(r.secondPreferenceTaskLink)}" target="_blank" rel="noopener" style="display:block;font-size:11px;color:#2563eb;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px;">📄 2nd task</a>`
+      : '';
+    return badge + link1 + link2;
+  }
+
+  function buildTaskSection(r) {
+    const hasTask = r.firstPreferenceTaskLink || r.secondPreferenceTaskLink;
+    const divider = '<hr style="border:none;border-top:1px solid #f0ede8;margin:24px 0;">';
+    if (!hasTask) {
+      return `${divider}<div class="qa-q" style="margin-bottom:8px;">Tasks</div><div style="color:#94a3b8;font-size:14px;font-style:italic;">No task submitted yet.</div>`;
+    }
+    const statusHtml = r.taskSubmissionStatus
+      ? `<span class="status-badge status-done" style="margin-left:10px;font-size:11px;">${escHtml(r.taskSubmissionStatus)}</span>` : '';
+    const submittedAt = r.taskSubmittedAt
+      ? `<div style="font-size:12px;color:#94a3b8;margin-bottom:16px;">Submitted: ${escHtml(r.taskSubmittedAt)}</div>` : '';
+    const link1 = r.firstPreferenceTaskLink
+      ? `<div style="margin-bottom:10px;"><span style="font-size:11px;font-weight:bold;color:#94a3b8;text-transform:uppercase;letter-spacing:0.6px;">1st Preference Task</span><br><a href="${escHtml(r.firstPreferenceTaskLink)}" target="_blank" rel="noopener" style="color:#2563eb;font-size:14px;word-break:break-all;">${escHtml(r.firstPreferenceTaskLink)}</a></div>` : '';
+    const link2 = r.secondPreferenceTaskLink
+      ? `<div style="margin-bottom:10px;"><span style="font-size:11px;font-weight:bold;color:#94a3b8;text-transform:uppercase;letter-spacing:0.6px;">2nd Preference Task</span><br><a href="${escHtml(r.secondPreferenceTaskLink)}" target="_blank" rel="noopener" style="color:#2563eb;font-size:14px;word-break:break-all;">${escHtml(r.secondPreferenceTaskLink)}</a></div>` : '';
+    const notes = r.taskNotes
+      ? `<div class="qa-block"><div class="qa-q">Task Notes</div><div class="qa-a">${escHtml(r.taskNotes)}</div></div>` : '';
+    return `${divider}<div class="qa-q" style="margin-bottom:12px;">Tasks ${statusHtml}</div>${submittedAt}${link1}${link2}${notes}`;
+  }
 
   function renderScoreTable(rows) {
     const tbody = document.getElementById('score-body');
@@ -822,6 +858,7 @@
         <td><div class="role-main">${escHtml(r.roleAppliedFor)}</div></td>
         <td><div class="role-second">${escHtml(r.secondPreference || '—')}</div></td>
         <td><span class="slot-badge" style="font-size:11px;">${escHtml(r.interviewSlot || '—')}</span></td>
+        <td style="min-width:130px;">${taskCell(r)}</td>
         <td><input type="number" class="score-num" id="s1-${r.rowIndex}" min="0" max="100" step="0.5" value="${escHtml(r.firstPreferenceScore)}" placeholder="—"></td>
         <td><input type="number" class="score-num" id="s2-${r.rowIndex}" min="0" max="100" step="0.5" value="${escHtml(r.secondPreferenceScore)}" placeholder="—"></td>
         <td><input type="url" class="url-input" id="notes-${r.rowIndex}" value="${escHtml(r.notesUrl)}" placeholder="Paste doc URL"></td>

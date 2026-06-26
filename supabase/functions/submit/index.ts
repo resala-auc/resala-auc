@@ -1391,7 +1391,7 @@ async function loadAdminDashboard(token: string): Promise<{
 
   const [reservationResponse, applicationResponse] = await Promise.all([
     sheetsFetch(token, "GET", `${sheetRange(RESERVATION_SHEET_NAME, "A2:N")}`),
-    sheetsFetch(token, "GET", `${sheetRange(sheetName, "A2:N")}`)
+    sheetsFetch(token, "GET", `${sheetRange(sheetName, "A2:W")}`)
   ]);
 
   const reservationRows = (await reservationResponse.json()).values ?? [];
@@ -1428,7 +1428,12 @@ async function loadAdminDashboard(token: string): Promise<{
       whyThisRole: app[10] ?? "",
       whyChooseYourself: app[11] ?? "",
       hopeToLearn: app[12] ?? "",
-      previousResalaExperience: app[13] ?? ""
+      previousResalaExperience: app[13] ?? "",
+      taskSubmittedAt: app[18] ?? "",
+      firstPreferenceTaskLink: app[19] ?? "",
+      secondPreferenceTaskLink: app[20] ?? "",
+      taskNotes: app[21] ?? "",
+      taskSubmissionStatus: app[22] ?? ""
     };
   });
 
@@ -1470,6 +1475,11 @@ async function loadAdminApplicants(token: string): Promise<{
     secondPreference: row[17] ?? "",
     interviewSlot: row[14] ?? "",
     status: row[16] ?? "",
+    taskSubmittedAt: row[18] ?? "",
+    firstPreferenceTaskLink: row[19] ?? "",
+    secondPreferenceTaskLink: row[20] ?? "",
+    taskNotes: row[21] ?? "",
+    taskSubmissionStatus: row[22] ?? "",
     notesUrl: row[23] ?? "",
     firstPreferenceScore: row[24] ?? "",
     secondPreferenceScore: row[25] ?? ""
