@@ -47,17 +47,17 @@ The function will also create and use two sheet tabs if they do not already exis
 - `Interview Slots`
 - `Interview Reservations`
 
-The `Interview Slots` tab seeds editable rows for `3:00 PM`, `3:30 PM`, `7:00 PM`, `7:30 PM`, `8:00 PM`, and `8:30 PM`. Only dated, active, non-full, future slots appear on the form.
+The `Interview Slots` tab seeds editable one-hour rows for `3:00 PM`, `3:30 PM`, `7:00 PM`, `7:30 PM`, `8:00 PM`, and `8:30 PM`. Only dated, active, non-full, future slots appear on the form.
 
 Recruitment slots run from Monday, June 22, 2026 through Wednesday, July 15, 2026. The backend generates one row per date/time, with a unique `Slot ID` for every row:
 
 ```text
-slot-2026-06-22-1500 | 2026-06-22 | 3:00 PM | 3:30 PM | 2026-06-22 at 3:00 PM | 1 | TRUE
-slot-2026-06-22-1530 | 2026-06-22 | 3:30 PM | 4:00 PM | 2026-06-22 at 3:30 PM | 1 | TRUE
-slot-2026-06-22-1900 | 2026-06-22 | 7:00 PM | 7:30 PM | 2026-06-22 at 7:00 PM | 1 | TRUE
-slot-2026-06-22-1930 | 2026-06-22 | 7:30 PM | 8:00 PM | 2026-06-22 at 7:30 PM | 1 | TRUE
-slot-2026-06-22-2000 | 2026-06-22 | 8:00 PM | 8:30 PM | 2026-06-22 at 8:00 PM | 1 | TRUE
-slot-2026-06-22-2030 | 2026-06-22 | 8:30 PM | 9:00 PM | 2026-06-22 at 8:30 PM | 1 | TRUE
+slot-2026-06-22-1500 | 2026-06-22 | 3:00 PM | 4:00 PM | 2026-06-22 at 3:00 PM | 1 | TRUE
+slot-2026-06-22-1530 | 2026-06-22 | 3:30 PM | 4:30 PM | 2026-06-22 at 3:30 PM | 1 | TRUE
+slot-2026-06-22-1900 | 2026-06-22 | 7:00 PM | 8:00 PM | 2026-06-22 at 7:00 PM | 1 | TRUE
+slot-2026-06-22-1930 | 2026-06-22 | 7:30 PM | 8:30 PM | 2026-06-22 at 7:30 PM | 1 | TRUE
+slot-2026-06-22-2000 | 2026-06-22 | 8:00 PM | 9:00 PM | 2026-06-22 at 8:00 PM | 1 | TRUE
+slot-2026-06-22-2030 | 2026-06-22 | 8:30 PM | 9:30 PM | 2026-06-22 at 8:30 PM | 1 | TRUE
 ```
 
 The generated sheet includes those six rows for every date through `2026-07-15`. Once a slot's start time passes in the `Africa/Cairo` timezone, the backend automatically hides it from the form.
@@ -132,6 +132,7 @@ supabase functions deploy send-interview-reminders --project-ref upnmxdgqdkvgzfw
 - A separate scheduled Supabase function sends a direct Gmail reminder 30 minutes before the interview, reminds applicants to submit both tasks if they have not submitted yet, and marks the reminder as `Sent`.
 - The `/tasks/` page lets applicants submit task links and maps them back to their application row.
 - `Interview Reservations` includes an `Interview Status` column seeded as `Not Done`; update it to `Done` after the interview.
+- The admin dashboard can update each reservation's interview status and includes an `Extend booked to 1 hour` action for patching already-created Calendar events after deploying the one-hour duration change.
 - The Edge Function is deployed with JWT verification disabled so GitHub Pages can post to it directly.
 
 ## Local testing

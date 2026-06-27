@@ -16,6 +16,8 @@ const TASK_SUBMISSION_URL = Deno.env.get("TASK_SUBMISSION_URL") ?? "";
 const CALENDAR_ID = Deno.env.get("CALENDAR_ID") ?? GMAIL_SENDER_EMAIL;
 const CALENDAR_TIME_ZONE = Deno.env.get("CALENDAR_TIME_ZONE") ?? "Africa/Cairo";
 const ADMIN_RESET_SECRET = Deno.env.get("ADMIN_RESET_SECRET") ?? "";
+const INTERVIEW_SLOT_DURATION_MINUTES = 60;
+const INTERVIEW_REMINDER_MINUTES = 30;
 
 const APPLICATION_BASE_HEADERS = [
   "Timestamp",
@@ -84,12 +86,12 @@ const RESERVATION_HEADERS = [
 const RECRUITMENT_START_DATE = "2026-06-22";
 const RECRUITMENT_END_DATE = "2026-07-15";
 const DAILY_SLOT_TIMES = [
-  { code: "1500", startTime: "3:00 PM", endTime: "3:30 PM" },
-  { code: "1530", startTime: "3:30 PM", endTime: "4:00 PM" },
-  { code: "1900", startTime: "7:00 PM", endTime: "7:30 PM" },
-  { code: "1930", startTime: "7:30 PM", endTime: "8:00 PM" },
-  { code: "2000", startTime: "8:00 PM", endTime: "8:30 PM" },
-  { code: "2030", startTime: "8:30 PM", endTime: "9:00 PM" }
+  { code: "1500", startTime: "3:00 PM" },
+  { code: "1530", startTime: "3:30 PM" },
+  { code: "1900", startTime: "7:00 PM" },
+  { code: "1930", startTime: "7:30 PM" },
+  { code: "2000", startTime: "8:00 PM" },
+  { code: "2030", startTime: "8:30 PM" }
 ];
 
 const corsHeaders = {
@@ -154,7 +156,17 @@ type AdminReschedulePayload = {
   reservationRowIndex: number;
   date: string;      // YYYY-MM-DD
   startTime: string; // HH:MM 24h
-  endTime?: string;  // HH:MM 24h, optional — defaults to +30 min
+  endTime?: string;  // HH:MM 24h, optional; defaults to the configured slot duration.
+};
+
+type AdminUpdateInterviewStatusPayload = {
+  mode: "admin-update-interview-status";
+  reservationRowIndex: number;
+  interviewStatus: string;
+};
+
+type AdminExtendInterviewDurationsPayload = {
+  mode: "admin-extend-interview-durations";
 };
 
 type AdminLoadApplicantsPayload = {
@@ -168,6 +180,18 @@ type AdminUpdateScorePayload = {
   firstPreferenceScore: string;
   secondPreferenceScore: string;
 };
+
+type SubmissionPayload =
+  | ApplicationPayload
+  | TaskSubmissionPayload
+  | AdminResetPayload
+  | AdminAddTestSlotPayload
+  | AdminLoadPayload
+  | AdminReschedulePayload
+  | AdminUpdateInterviewStatusPayload
+  | AdminExtendInterviewDurationsPayload
+  | AdminLoadApplicantsPayload
+  | AdminUpdateScorePayload;
 
 type ConfirmationEmailTemplate = {
   subject: string;
@@ -319,6 +343,32 @@ Deno.serve(async (request) => {
       return jsonResponse({ ok: true, ...result });
     }
 
+    if (isAdminUpdateInterviewStatusPayload(payload)) {
+      authorizeAdminReset(request);
+
+      if (!SHEET_ID) {
+        throw new Error("SHEET_ID is not configured.");
+      }
+
+      const token = await getGoogleAccessToken();
+      const result = await updateReservationInterviewStatus(token, payload);
+
+      return jsonResponse({ ok: true, ...result });
+    }
+
+    if (isAdminExtendInterviewDurationsPayload(payload)) {
+      authorizeAdminReset(request);
+
+      if (!SHEET_ID) {
+        throw new Error("SHEET_ID is not configured.");
+      }
+
+      const token = await getGoogleAccessToken();
+      const result = await extendReservedInterviewDurations(token);
+
+      return jsonResponse({ ok: true, ...result });
+    }
+
     if (isAdminLoadApplicantsPayload(payload)) {
       authorizeAdminReset(request);
 
@@ -391,84 +441,48 @@ Deno.serve(async (request) => {
 
 async function parsePayload(
   request: Request
-): Promise<ApplicationPayload | TaskSubmissionPayload | AdminResetPayload | AdminAddTestSlotPayload | AdminLoadPayload | AdminReschedulePayload | AdminLoadApplicantsPayload | AdminUpdateScorePayload> {
+): Promise<SubmissionPayload> {
   const text = await request.text();
   if (!text.trim()) {
     throw new Error("Missing submission body.");
   }
 
-  return JSON.parse(text) as
-    | ApplicationPayload
-    | TaskSubmissionPayload
-    | AdminResetPayload
-    | AdminAddTestSlotPayload
-    | AdminLoadPayload
-    | AdminReschedulePayload;
+  return JSON.parse(text) as SubmissionPayload;
 }
 
-function isTaskSubmissionPayload(
-  payload:
-    | ApplicationPayload
-    | TaskSubmissionPayload
-    | AdminResetPayload
-    | AdminAddTestSlotPayload
-    | AdminLoadPayload
-    | AdminReschedulePayload
-): payload is TaskSubmissionPayload {
+function isTaskSubmissionPayload(payload: SubmissionPayload): payload is TaskSubmissionPayload {
   return (payload as TaskSubmissionPayload).mode === "task-submission";
 }
 
-function isAdminResetPayload(
-  payload:
-    | ApplicationPayload
-    | TaskSubmissionPayload
-    | AdminResetPayload
-    | AdminAddTestSlotPayload
-    | AdminLoadPayload
-    | AdminReschedulePayload
-): payload is AdminResetPayload {
+function isAdminResetPayload(payload: SubmissionPayload): payload is AdminResetPayload {
   return (payload as AdminResetPayload).mode === "admin-reset-test";
 }
 
-function isAdminAddTestSlotPayload(
-  payload:
-    | ApplicationPayload
-    | TaskSubmissionPayload
-    | AdminResetPayload
-    | AdminAddTestSlotPayload
-    | AdminLoadPayload
-    | AdminReschedulePayload
-): payload is AdminAddTestSlotPayload {
+function isAdminAddTestSlotPayload(payload: SubmissionPayload): payload is AdminAddTestSlotPayload {
   return (payload as AdminAddTestSlotPayload).mode === "admin-add-test-slot";
 }
 
-function isAdminLoadPayload(
-  payload:
-    | ApplicationPayload
-    | TaskSubmissionPayload
-    | AdminResetPayload
-    | AdminAddTestSlotPayload
-    | AdminLoadPayload
-    | AdminReschedulePayload
-): payload is AdminLoadPayload {
+function isAdminLoadPayload(payload: SubmissionPayload): payload is AdminLoadPayload {
   return (payload as AdminLoadPayload).mode === "admin-load";
 }
 
-function isAdminReschedulePayload(
-  payload: unknown
-): payload is AdminReschedulePayload {
+function isAdminReschedulePayload(payload: SubmissionPayload): payload is AdminReschedulePayload {
   return (payload as AdminReschedulePayload).mode === "admin-reschedule";
 }
 
-function isAdminLoadApplicantsPayload(
-  payload: unknown
-): payload is AdminLoadApplicantsPayload {
+function isAdminUpdateInterviewStatusPayload(payload: SubmissionPayload): payload is AdminUpdateInterviewStatusPayload {
+  return (payload as AdminUpdateInterviewStatusPayload).mode === "admin-update-interview-status";
+}
+
+function isAdminExtendInterviewDurationsPayload(payload: SubmissionPayload): payload is AdminExtendInterviewDurationsPayload {
+  return (payload as AdminExtendInterviewDurationsPayload).mode === "admin-extend-interview-durations";
+}
+
+function isAdminLoadApplicantsPayload(payload: SubmissionPayload): payload is AdminLoadApplicantsPayload {
   return (payload as AdminLoadApplicantsPayload).mode === "admin-load-applicants";
 }
 
-function isAdminUpdateScorePayload(
-  payload: unknown
-): payload is AdminUpdateScorePayload {
+function isAdminUpdateScorePayload(payload: SubmissionPayload): payload is AdminUpdateScorePayload {
   return (payload as AdminUpdateScorePayload).mode === "admin-update-score";
 }
 
@@ -707,7 +721,9 @@ function buildConfirmationEmailTemplate(
   tasks: ApplicantTaskDocument[]
 ): ConfirmationEmailTemplate {
   const slot = payload.interviewSlotLabel ?? payload.interviewSlot;
-  const taskDeadline = formatLocalDateTimeLabel(subtractMinutesFromLocalDateTime(reservation.slot.startDateTime, 30));
+  const taskDeadline = formatLocalDateTimeLabel(
+    subtractMinutesFromLocalDateTime(reservation.slot.startDateTime, INTERVIEW_REMINDER_MINUTES)
+  );
   const submissionLine = getTaskSubmissionLine();
   const subject = "Resala AUC Application Confirmation";
   const body = [
@@ -1193,7 +1209,7 @@ async function getSpreadsheetSheetTitles(token: string): Promise<Set<string>> {
   return resolvedSheetTitles;
 }
 
-async function ensureSlotSheets(token: string): Promise<void> {
+async function ensureSlotSheets(token: string, normalizeDurations = true): Promise<void> {
   await ensureSheetTab(token, SLOT_SHEET_NAME);
   await ensureSheetTab(token, RESERVATION_SHEET_NAME);
   await ensureSheetSeed(
@@ -1202,7 +1218,34 @@ async function ensureSlotSheets(token: string): Promise<void> {
     SLOT_HEADERS,
     buildRecruitmentSlotRows()
   );
+  if (normalizeDurations) {
+    await normalizeSlotDurations(token);
+  }
   await ensureSheetHeaders(token, RESERVATION_SHEET_NAME, RESERVATION_HEADERS);
+}
+
+async function normalizeSlotDurations(token: string): Promise<number> {
+  const response = await sheetsFetch(token, "GET", `${sheetRange(SLOT_SHEET_NAME, "A2:I")}`);
+  const rows = (await response.json()).values ?? [];
+  let updated = 0;
+
+  for (const [index, row] of rows.entries()) {
+    const startTime = String(row[2] ?? "").trim();
+    const currentEndTime = String(row[3] ?? "").trim();
+    const expectedEndTime = addMinutesToTime(startTime, INTERVIEW_SLOT_DURATION_MINUTES);
+
+    if (!startTime || !expectedEndTime || currentEndTime === expectedEndTime) {
+      continue;
+    }
+
+    const rowIndex = index + 2;
+    await sheetsFetch(token, "PUT", `${sheetRange(SLOT_SHEET_NAME, `D${rowIndex}`)}?valueInputOption=RAW`, {
+      values: [[expectedEndTime]]
+    });
+    updated += 1;
+  }
+
+  return updated;
 }
 
 async function ensureSheetTab(token: string, tabName: string): Promise<void> {
@@ -1276,7 +1319,7 @@ async function resetTestApplicant(token: string, payload: AdminResetPayload, app
   await ensureHeaders(token, applicationSheetName);
 
   const reservationResponse = await sheetsFetch(token, "GET", `${sheetRange(RESERVATION_SHEET_NAME, "A2:N")}`);
-  const reservationRows = (await reservationResponse.json()).values ?? [];
+  const reservationRows = ((await reservationResponse.json()).values ?? []) as string[][];
   const reservationMatches = reservationRows
     .map((row: string[], index: number) => ({ row, rowIndex: index + 2 }))
     .filter(({ row }) => {
@@ -1292,7 +1335,7 @@ async function resetTestApplicant(token: string, payload: AdminResetPayload, app
 
   const applicationWidth = columnLetter(HEADERS.length);
   const applicationResponse = await sheetsFetch(token, "GET", `${sheetRange(applicationSheetName, `A2:${applicationWidth}`)}`);
-  const applicationRows = (await applicationResponse.json()).values ?? [];
+  const applicationRows = ((await applicationResponse.json()).values ?? []) as string[][];
   const applicationMatches = applicationRows
     .map((row: string[], index: number) => ({ row, rowIndex: index + 2 }))
     .filter(({ row }) => {
@@ -1348,7 +1391,7 @@ async function addTestInterviewSlot(
 ): Promise<{ slotId: string; label: string; rowIndex: number }> {
   const date = String(payload.date ?? "").trim();
   const startTime = String(payload.startTime ?? "").trim();
-  const endTime = String(payload.endTime ?? "").trim() || addMinutesToTime(startTime, 30);
+  const endTime = String(payload.endTime ?? "").trim() || addMinutesToTime(startTime, INTERVIEW_SLOT_DURATION_MINUTES);
   const label = String(payload.label ?? "").trim() || buildSlotLabel(date, startTime);
 
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
@@ -1368,7 +1411,7 @@ async function addTestInterviewSlot(
   });
 
   const slotResponse = await sheetsFetch(token, "GET", `${sheetRange(SLOT_SHEET_NAME, "A2:I")}`);
-  const slotRows = (await slotResponse.json()).values ?? [];
+  const slotRows = ((await slotResponse.json()).values ?? []) as string[][];
   const rowIndex = slotRows.findIndex((sheetRow: string[]) => normalize(sheetRow[0]) === normalize(slotId)) + 2;
 
   if (rowIndex < 2) {
@@ -1439,6 +1482,144 @@ async function loadAdminDashboard(token: string): Promise<{
   const slots = await getInterviewSlots(token);
 
   return { reservations, slots };
+}
+
+async function updateReservationInterviewStatus(
+  token: string,
+  payload: AdminUpdateInterviewStatusPayload
+): Promise<{ updatedReservation: boolean; updatedApplication: boolean; interviewStatus: string }> {
+  const rowIndex = Number(payload.reservationRowIndex);
+  const interviewStatus = normalizeInterviewStatus(payload.interviewStatus);
+
+  if (!Number.isInteger(rowIndex) || rowIndex < 2) {
+    throw new Error("Invalid reservation row.");
+  }
+
+  if (!interviewStatus) {
+    throw new Error("Invalid interview status.");
+  }
+
+  const reservationResponse = await sheetsFetch(token, "GET", `${sheetRange(RESERVATION_SHEET_NAME, `A${rowIndex}:N${rowIndex}`)}`);
+  const reservationValues = (await reservationResponse.json()).values?.[0] ?? [];
+
+  if (!reservationValues.length) {
+    throw new Error(`No reservation found at row ${rowIndex}.`);
+  }
+
+  const aucEmail = String(reservationValues[4] ?? "").trim();
+
+  await sheetsFetch(token, "PUT", `${sheetRange(RESERVATION_SHEET_NAME, `I${rowIndex}`)}?valueInputOption=RAW`, {
+    values: [[interviewStatus]]
+  });
+
+  let updatedApplication = false;
+  if (aucEmail) {
+    const sheetName = await getSheetName(token);
+    const applicationWidth = columnLetter(HEADERS.length);
+    const applicationResponse = await sheetsFetch(token, "GET", `${sheetRange(sheetName, `A2:${applicationWidth}`)}`);
+    const applicationRows = (await applicationResponse.json()).values ?? [];
+    const appRowIndex = applicationRows.findIndex((row: string[]) => normalize(row[2]) === normalize(aucEmail));
+
+    if (appRowIndex !== -1) {
+      const sheetRow = appRowIndex + 2;
+      await sheetsFetch(token, "PUT", `${sheetRange(sheetName, `Q${sheetRow}`)}?valueInputOption=RAW`, {
+        values: [[interviewStatus]]
+      });
+      updatedApplication = true;
+    }
+  }
+
+  return { updatedReservation: true, updatedApplication, interviewStatus };
+}
+
+async function extendReservedInterviewDurations(token: string): Promise<{
+  normalizedSlots: number;
+  checkedReservations: number;
+  updatedCalendarEvents: number;
+  skippedReservations: number;
+}> {
+  if (!CALENDAR_ID || !gmailConfigured()) {
+    throw new Error("Google Calendar event updates are not configured.");
+  }
+
+  await ensureSlotSheets(token, false);
+  const normalizedSlots = await normalizeSlotDurations(token);
+
+  const [slotResponse, reservationResponse] = await Promise.all([
+    sheetsFetch(token, "GET", `${sheetRange(SLOT_SHEET_NAME, "A2:I")}`),
+    sheetsFetch(token, "GET", `${sheetRange(RESERVATION_SHEET_NAME, "A2:N")}`)
+  ]);
+  const slotRows = (await slotResponse.json()).values ?? [];
+  const reservationRows = ((await reservationResponse.json()).values ?? []) as string[][];
+  const slotById = new Map<string, { startDateTime: string; endDateTime: string }>();
+
+  for (const row of slotRows) {
+    const id = String(row[0] ?? "").trim();
+    const date = String(row[1] ?? "").trim();
+    const startTime = String(row[2] ?? "").trim();
+    const endTime = addMinutesToTime(startTime, INTERVIEW_SLOT_DURATION_MINUTES);
+    const startDateTime = buildLocalDateTime(date, startTime);
+    const endDateTime = buildLocalDateTime(date, endTime);
+
+    if (id && startDateTime && endDateTime) {
+      slotById.set(normalize(id), { startDateTime, endDateTime });
+    }
+  }
+
+  const calendarToken = await getGmailAccessToken();
+  let updatedCalendarEvents = 0;
+  let skippedReservations = 0;
+
+  for (const row of reservationRows) {
+    const slotId = String(row[1] ?? "").trim();
+    const calendarEventId = String(row[6] ?? "").trim();
+    const slot = slotById.get(normalize(slotId));
+
+    if (!calendarEventId || !slot) {
+      skippedReservations += 1;
+      continue;
+    }
+
+    await updateCalendarEventEnd(calendarToken, calendarEventId, slot.endDateTime);
+    updatedCalendarEvents += 1;
+  }
+
+  return {
+    normalizedSlots,
+    checkedReservations: reservationRows.length,
+    updatedCalendarEvents,
+    skippedReservations
+  };
+}
+
+async function updateCalendarEventEnd(token: string, eventId: string, endDateTime: string): Promise<void> {
+  const response = await fetch(
+    `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(CALENDAR_ID)}/events/${encodeURIComponent(eventId)}?sendUpdates=all`,
+    {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        end: {
+          dateTime: endDateTime,
+          timeZone: CALENDAR_TIME_ZONE
+        }
+      })
+    }
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Google Calendar event update failed: ${errorText}`);
+  }
+}
+
+function normalizeInterviewStatus(value: unknown): string {
+  const status = String(value ?? "").trim();
+  const allowedStatuses = new Set(["Not Done", "Done", "No Show", "Pending"]);
+  return allowedStatuses.has(status) ? status : "";
 }
 
 async function ensureInterviewScoreHeaders(token: string, sheetName: string): Promise<void> {
@@ -1522,7 +1703,8 @@ async function rescheduleInterview(
   createdNewEvent: boolean;
   emailSent: boolean;
 }> {
-  const { reservationRowIndex, date, startTime: rawStartTime, endTime: rawEndTime } = payload;
+  const { reservationRowIndex, date, startTime: rawStartTime } = payload;
+  const rawEndTime = String(payload.endTime ?? "").trim();
 
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
     throw new Error("Invalid date format. Use YYYY-MM-DD.");
@@ -1554,10 +1736,10 @@ async function rescheduleInterview(
   const [sh, sm] = rawStartTime.split(":").map(Number);
   const startDateTime = `${date}T${String(sh).padStart(2, "0")}:${String(sm).padStart(2, "0")}:00`;
 
-  const endMinutesTotal = sh * 60 + sm + 30;
+  const endMinutesTotal = sh * 60 + sm + INTERVIEW_SLOT_DURATION_MINUTES;
   const eh = Math.floor(endMinutesTotal / 60) % 24;
   const em = endMinutesTotal % 60;
-  const resolvedEndTime = rawEndTime ?? `${String(eh).padStart(2, "0")}:${String(em).padStart(2, "0")}`;
+  const resolvedEndTime = rawEndTime || `${String(eh).padStart(2, "0")}:${String(em).padStart(2, "0")}`;
   const [reh, rem] = resolvedEndTime.split(":").map(Number);
   const endDateTime = `${date}T${String(reh).padStart(2, "0")}:${String(rem).padStart(2, "0")}:00`;
 
@@ -1624,7 +1806,7 @@ async function rescheduleInterview(
   const newCalendarEvent = await createCalendarEvent(calendarToken, applicantPayload, newSlot);
   await updateSlotCalendarFields(token, newSlot, newCalendarEvent);
 
-  const newReminderSendAt = subtractMinutesFromLocalDateTime(newSlot.startDateTime, 30);
+  const newReminderSendAt = subtractMinutesFromLocalDateTime(newSlot.startDateTime, INTERVIEW_REMINDER_MINUTES);
 
   await sheetsFetch(token, "PUT", `${sheetRange(RESERVATION_SHEET_NAME, `B${reservationRowIndex}:C${reservationRowIndex}`)}?valueInputOption=RAW`, {
     values: [[newSlot.id, newSlot.label]]
@@ -1688,7 +1870,7 @@ async function resolveRescheduleSlot(
     sheetsFetch(token, "GET", `${sheetRange(SLOT_SHEET_NAME, "A2:I")}`),
     sheetsFetch(token, "GET", `${sheetRange(RESERVATION_SHEET_NAME, "A2:B")}`)
   ]);
-  const slotRows = (await slotResponse.json()).values ?? [];
+  const slotRows = ((await slotResponse.json()).values ?? []) as string[][];
   const reservationRows = (await reservationResponse.json()).values ?? [];
 
   const match = slotRows
@@ -1702,7 +1884,7 @@ async function resolveRescheduleSlot(
   const row = match.row;
   const id = String(row[0] ?? "").trim();
   const startTime = String(row[2] ?? "").trim();
-  const endTime = String(row[3] ?? "").trim() || addMinutesToTime(startTime, 30);
+  const endTime = String(row[3] ?? "").trim() || addMinutesToTime(startTime, INTERVIEW_SLOT_DURATION_MINUTES);
   const label = String(row[4] ?? "").trim() || buildSlotLabel(date, startTime);
   const capacity = Number(row[5] ?? 1) || 1;
   const active = String(row[6] ?? "TRUE").toLowerCase() !== "false";
@@ -1903,7 +2085,7 @@ async function clearFreedSlotCalendarFields(token: string, slotIds: Set<string>)
   );
 
   const slotResponse = await sheetsFetch(token, "GET", `${sheetRange(SLOT_SHEET_NAME, "A2:I")}`);
-  const slotRows = (await slotResponse.json()).values ?? [];
+  const slotRows = ((await slotResponse.json()).values ?? []) as string[][];
   let cleared = 0;
 
   for (const [index, row] of slotRows.entries()) {
@@ -2001,7 +2183,7 @@ function buildRecruitmentSlotRows(): Array<Array<string | number>> {
         `slot-${dateString}-${slot.code}`,
         dateString,
         slot.startTime,
-        slot.endTime,
+        addMinutesToTime(slot.startTime, INTERVIEW_SLOT_DURATION_MINUTES),
         `${dateString} at ${slot.startTime}`,
         1,
         "TRUE",
@@ -2018,10 +2200,10 @@ async function getInterviewSlots(token: string): Promise<InterviewSlotOption[]> 
   await ensureSlotSheets(token);
 
   const slotResponse = await sheetsFetch(token, "GET", `${sheetRange(SLOT_SHEET_NAME, "A2:I")}`);
-  const slotRows = (await slotResponse.json()).values ?? [];
+  const slotRows = ((await slotResponse.json()).values ?? []) as string[][];
 
   const reservationResponse = await sheetsFetch(token, "GET", `${sheetRange(RESERVATION_SHEET_NAME, "A2:L")}`);
-  const reservationRows = (await reservationResponse.json()).values ?? [];
+  const reservationRows = ((await reservationResponse.json()).values ?? []) as string[][];
   const reservedCounts = new Map<string, number>();
 
   for (const row of reservationRows) {
@@ -2035,7 +2217,7 @@ async function getInterviewSlots(token: string): Promise<InterviewSlotOption[]> 
       const id = String(row[0] ?? "").trim();
       const date = String(row[1] ?? "").trim();
       const startTime = String(row[2] ?? "").trim();
-      const endTime = String(row[3] ?? "").trim() || addMinutesToTime(startTime, 30);
+      const endTime = String(row[3] ?? "").trim() || addMinutesToTime(startTime, INTERVIEW_SLOT_DURATION_MINUTES);
       const label = String(row[4] ?? "").trim() || buildSlotLabel(date, startTime);
       const capacity = Number(row[5] ?? 1) || 1;
       const active = String(row[6] ?? "TRUE").toLowerCase() !== "false";
@@ -2097,7 +2279,7 @@ async function reserveInterviewSlot(token: string, payload: ApplicationPayload):
         calendarEvent.calendarEventId,
         calendarEvent.meetLink,
         "Not Done",
-        subtractMinutesFromLocalDateTime(selected.startDateTime, 30),
+        subtractMinutesFromLocalDateTime(selected.startDateTime, INTERVIEW_REMINDER_MINUTES),
         "",
         "Pending",
         payload.roleAppliedFor,
@@ -2157,8 +2339,8 @@ async function createCalendarEvent(
         reminders: {
           useDefault: false,
           overrides: [
-            { method: "email", minutes: 30 },
-            { method: "popup", minutes: 30 }
+            { method: "email", minutes: INTERVIEW_REMINDER_MINUTES },
+            { method: "popup", minutes: INTERVIEW_REMINDER_MINUTES }
           ]
         },
         conferenceData: {
@@ -2494,7 +2676,7 @@ function parseTime(value: string): string {
 }
 
 function addMinutesToTime(value: string, minutesToAdd: number): string {
-  const parsedTime = parseTime(value);
+  const parsedTime = normalizeTime24(value);
   if (!parsedTime) return "";
 
   const [hours, minutes] = parsedTime.split(":").map(Number);

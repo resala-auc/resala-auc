@@ -232,6 +232,23 @@
     .status-done     { background: #dcfce7; color: #166534; }
     .status-notdone  { background: #fee2e2; color: #991b1b; }
 
+    .status-control {
+      min-width: 116px;
+      border: 1px solid #e6edf2;
+      border-radius: 8px;
+      padding: 7px 10px;
+      font-size: 12px;
+      font-weight: bold;
+      color: #172033;
+      background: #f8fafc;
+      outline: none;
+    }
+
+    .status-control:focus {
+      border-color: #0d2b45;
+      background: #fff;
+    }
+
     .datetime-inputs { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-bottom: 6px; }
 
     .datetime-inputs input {
@@ -435,7 +452,10 @@
             <h2>Interview Reservations</h2>
             <div class="count" id="res-count"></div>
           </div>
-          <button class="btn btn-primary btn-sm" onclick="refresh()">↺ Refresh</button>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <button class="btn btn-accent btn-sm" id="extend-duration-btn" onclick="extendInterviewDurations()">Extend booked to 1 hour</button>
+            <button class="btn btn-primary btn-sm" onclick="refresh()">↺ Refresh</button>
+          </div>
         </div>
         <div class="filter-bar">
           <input id="res-search" placeholder="Search name, email, role…" oninput="filterRes()">
@@ -640,8 +660,20 @@
   function statusBadge(val) {
     const v = String(val || '').toLowerCase();
     if (v === 'done') return `<span class="status-badge status-done">Done</span>`;
+    if (v === 'no show') return `<span class="status-badge status-notdone">No show</span>`;
     if (v === 'not done') return `<span class="status-badge status-notdone">Not done</span>`;
     return `<span class="status-badge status-pending">${escHtml(val || 'Pending')}</span>`;
+  }
+
+  function statusControl(r) {
+    const current = r.interviewStatus || 'Not Done';
+    const options = ['Not Done', 'Done', 'No Show', 'Pending'];
+    const allOptions = options.includes(current) ? options : [current, ...options];
+    return `
+      <select class="status-control" id="status-${r.rowIndex}" data-current-status="${escHtml(current)}" onchange="updateInterviewStatus(${r.rowIndex})">
+        ${allOptions.map(status => `<option value="${escHtml(status)}"${status === current ? ' selected' : ''}>${escHtml(status)}</option>`).join('')}
+      </select>
+    `;
   }
 
   function normalize(s) { return String(s ?? '').trim().toLowerCase(); }
@@ -696,7 +728,7 @@
               : `<span class="meet-btn no-link">No Meet link</span>`
             }
           </td>
-          <td>${statusBadge(r.interviewStatus)}</td>
+          <td>${statusControl(r)}</td>
           <td style="min-width:230px;">
             <div class="datetime-inputs">
               <input type="date" id="new-date-${r.rowIndex}" min="${todayStr()}" value="${todayStr()}">
@@ -747,6 +779,48 @@
       showRowNotice(rowIndex, err.message, '#991b1b');
       btn.disabled = false;
       btn.textContent = 'Reschedule';
+    }
+  }
+
+  async function updateInterviewStatus(rowIndex) {
+    const select = document.getElementById(`status-${rowIndex}`);
+    if (!select) return;
+
+    const previous = select.dataset.currentStatus || 'Not Done';
+    const interviewStatus = select.value;
+    select.disabled = true;
+
+    try {
+      const data = await apiFetch({ mode: 'admin-update-interview-status', reservationRowIndex: rowIndex, interviewStatus });
+      const nextStatus = data.interviewStatus || interviewStatus;
+      const reservation = allReservations.find(r => r.rowIndex === rowIndex);
+      if (reservation) reservation.interviewStatus = nextStatus;
+      select.dataset.currentStatus = nextStatus;
+      showRowNotice(rowIndex, '✓ Status updated', '#166534');
+    } catch (err) {
+      select.value = previous;
+      showRowNotice(rowIndex, err.message, '#991b1b');
+    } finally {
+      select.disabled = false;
+    }
+  }
+
+  async function extendInterviewDurations() {
+    const btn = document.getElementById('extend-duration-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner spinner-dark"></span>';
+
+    try {
+      const data = await apiFetch({ mode: 'admin-extend-interview-durations' });
+      showNotice(
+        `Updated ${data.updatedCalendarEvents || 0} calendar events. Normalized ${data.normalizedSlots || 0} slot rows.`,
+        'success'
+      );
+      setTimeout(() => refresh(), 1200);
+    } catch (err) {
+      showNotice(err.message, 'error');
+      btn.disabled = false;
+      btn.textContent = 'Extend booked to 1 hour';
     }
   }
 
