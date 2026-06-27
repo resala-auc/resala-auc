@@ -168,8 +168,8 @@ export const roles = [
   {
     name: "Fundraising",
     step: "The Step of Support",
-    description: "Plans sponsor outreach and donation paths so Resala can fund and expand its campaigns responsibly.",
-    preparation: "Draft a strategy to reach sponsors for Ramadan packs."
+    description: "Plans fundraising campaigns, sets campaign goals, and identifies the right sponsor types only when sponsorship support is needed.",
+    preparation: "Draft a fundraising campaign plan and explain which sponsor types would fit it if sponsorship is needed."
   },
   {
     name: "Visits",

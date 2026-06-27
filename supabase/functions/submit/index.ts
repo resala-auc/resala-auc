@@ -871,7 +871,7 @@ function getRolePrepLines(roleName: string): string[] {
       ];
     case "fundraising":
       return [
-        "- A short plan for reaching sponsors for Ramadan packs."
+        "- A fundraising campaign plan and which sponsor types would fit it if sponsorship is needed."
       ];
     case "hr":
       return [

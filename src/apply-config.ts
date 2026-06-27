@@ -126,7 +126,7 @@ export const roles: RoleOption[] = [
     id: "fundraising",
     name: "Fundraising",
     stepTitle: "The Step of Support",
-    description: "Plans sponsor outreach and donation paths so Resala can fund and expand its campaigns responsibly."
+    description: "Plans fundraising campaigns, sets campaign goals, and identifies the right sponsor types only when sponsorship support is needed."
   },
   {
     id: "visits",
@@ -183,7 +183,7 @@ export function createConfirmationEmailTemplate(payload: ApplicationPayload): Co
           : role === "pr"
             ? "A short outreach plan for a partner or collaborator Resala should approach."
             : role.includes("fundraising")
-              ? "A short plan for reaching sponsors for Ramadan packs."
+              ? "A fundraising campaign plan and which sponsor types would fit it if sponsorship is needed."
               : role.includes("hr")
                 ? "A simple plan for keeping people engaged through events, retreats, or check-ins."
                 : role.includes("operations")
