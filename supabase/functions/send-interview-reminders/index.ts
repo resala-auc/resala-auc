@@ -85,6 +85,8 @@ const TASK_DOCUMENTS: Record<string, TaskDocument> = {
   "tech director": taskDocument("Tech Director", "1jWXLeGeN4yIrq6q_Dutdm4Dqz3jtWgjIzpGHfuaXji0", "Final Task - Tech Director - Resala Board Recruitment"),
   "branding media": taskDocument("Branding / Media", "1kflQQAValfaoEpOO1r-mEaPRVl3loUeYd3XofPQivwY", "Final Task - Branding Media - Resala Board Recruitment"),
   "pr fundraising": taskDocument("PR / Fundraising", "127fH4iEaKGpc7s5qiRI-5Z9-jdgqwXtQeGIVGvHvaHw", "Final Task - PR Fundraising - Resala Board Recruitment"),
+  pr: taskDocument("PR", "127fH4iEaKGpc7s5qiRI-5Z9-jdgqwXtQeGIVGvHvaHw", "Final Task - PR Fundraising - Resala Board Recruitment"),
+  fundraising: taskDocument("Fundraising", "127fH4iEaKGpc7s5qiRI-5Z9-jdgqwXtQeGIVGvHvaHw", "Final Task - PR Fundraising - Resala Board Recruitment"),
   hr: taskDocument("HR", "1rYAnr0lhVyHW0GIwjHMOaMWxiGxZI3AOp6t5qY8imus", "Final Task - HR - Resala Board Recruitment"),
   operations: taskDocument("Operations", "1tvyaQDhCHnb9E4HiiVmB6ZNXpTVpunsti9ECwxw8f30", "Final Task - Operations - Resala Board Recruitment"),
   visits: taskDocument("Visits", "1ELC6nP7FQN33enuHbUamCvNYTlP8i3DNnA2NCuhPDF0", "Final Task - Visits - Resala Board Recruitment"),

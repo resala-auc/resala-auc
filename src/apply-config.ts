@@ -4,7 +4,8 @@ export type RoleId =
   | "operations"
   | "branding-media"
   | "hr"
-  | "pr-fundraising"
+  | "pr"
+  | "fundraising"
   | "visits"
   | "children-day-director"
   | "mothers-day-director"
@@ -116,10 +117,16 @@ export const roles: RoleOption[] = [
     description: "Supports the member experience through onboarding, engagement, internal communication, check-ins, and activities that keep the team connected."
   },
   {
-    id: "pr-fundraising",
-    name: "PR / Fundraising",
+    id: "pr",
+    name: "PR",
     stepTitle: "The Step of Opportunity",
-    description: "Builds relationships with sponsors, partners, and supporters so Resala can fund and expand its campaigns responsibly."
+    description: "Builds relationships with partners, campus communities, and external contacts so Resala can communicate professionally and open doors for collaboration."
+  },
+  {
+    id: "fundraising",
+    name: "Fundraising",
+    stepTitle: "The Step of Support",
+    description: "Plans sponsor outreach and donation paths so Resala can fund and expand its campaigns responsibly."
   },
   {
     id: "visits",
@@ -173,14 +180,16 @@ export function createConfirmationEmailTemplate(payload: ApplicationPayload): Co
         ? "One small system idea that could make a club process easier, and how you would implement it."
         : role.includes("branding")
           ? "A short plan for reaching 5k followers through consistent content."
-          : role.includes("pr")
-            ? "A short plan for reaching sponsors for Ramadan packs."
-            : role.includes("hr")
-              ? "A simple plan for keeping people engaged through events, retreats, or check-ins."
-              : role.includes("operations")
-                ? "A simple plan for managing logistics, setup, and tracking during an event."
-                : role.includes("visit")
-                  ? "A proposal for a one-day program that can be implemented in different orphanages or Dar Mosneen."
+          : role === "pr"
+            ? "A short outreach plan for a partner or collaborator Resala should approach."
+            : role.includes("fundraising")
+              ? "A short plan for reaching sponsors for Ramadan packs."
+              : role.includes("hr")
+                ? "A simple plan for keeping people engaged through events, retreats, or check-ins."
+                : role.includes("operations")
+                  ? "A simple plan for managing logistics, setup, and tracking during an event."
+                  : role.includes("visit")
+                    ? "A proposal for a one-day program that can be implemented in different orphanages or Dar Mosneen."
                   : role.includes("children")
                     ? "A proposal for the outcome underprivileged children need based on what you know about them."
                     : role.includes("mother")

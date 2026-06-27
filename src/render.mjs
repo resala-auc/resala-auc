@@ -346,7 +346,7 @@ function RolePreviewCards() {
         </div>
         <div class="contents-strip reveal">
           <span>Contents</span>
-          <p>Ten roles · this recruitment issue</p>
+          <p>Eleven roles · this recruitment issue</p>
         </div>
         <div class="role-index-list">
           ${rows}

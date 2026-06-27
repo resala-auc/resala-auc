@@ -160,9 +160,15 @@ export const roles = [
     preparation: "Draft a plan for keeping people engaged through engagement events and retreats."
   },
   {
-    name: "PR/Fundraising",
+    name: "PR",
     step: "The Step of Opportunity",
-    description: "Builds relationships with sponsors, partners, and supporters so Resala can fund and expand its campaigns responsibly.",
+    description: "Builds relationships with partners, campus communities, and external contacts so Resala can communicate professionally and open doors for collaboration.",
+    preparation: "Draft a short outreach plan for a partner or collaborator Resala should approach."
+  },
+  {
+    name: "Fundraising",
+    step: "The Step of Support",
+    description: "Plans sponsor outreach and donation paths so Resala can fund and expand its campaigns responsibly.",
     preparation: "Draft a strategy to reach sponsors for Ramadan packs."
   },
   {
