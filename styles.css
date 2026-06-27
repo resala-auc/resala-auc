@@ -1563,6 +1563,15 @@ h3 {
   background: rgba(255, 255, 255, 0.14);
 }
 
+.task-topbar-actions,
+.success-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
 .apply-hero-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(280px, 380px);
@@ -3050,6 +3059,17 @@ h3 {
     min-height: 42px;
     padding: 10px 12px;
     font-size: 0.85rem;
+  }
+
+  .task-topbar-actions,
+  .success-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .task-topbar-actions .button,
+  .success-actions .button {
+    flex: 1 1 180px;
   }
 
   .apply-hero h1 {

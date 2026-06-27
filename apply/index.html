@@ -21,7 +21,10 @@
               <img src="../The brand System/logos/Resala Logo - source.svg" alt="Resala AUC logo" width="420" height="236">
             </span>
           </a>
-          <a class="button button-secondary apply-back-link" href="../">Back to landing page</a>
+          <div class="task-topbar-actions">
+            <a class="button button-secondary apply-back-link" href="../tasks/">Submit tasks</a>
+            <a class="button button-secondary apply-back-link" href="../">Back to landing page</a>
+          </div>
         </header>
         <div class="container apply-hero-grid">
           <div class="apply-hero-copy">
@@ -149,11 +152,18 @@
           <span>Supports the member experience through onboarding, engagement, internal communication, check-ins, and activities that keep the team connected.</span>
         </label>
       
-        <label class="role-option-card" data-role-card="pr-fundraising">
-          <input class="choice-radio" type="radio" name="roleAppliedFor" value="pr-fundraising" required>
+        <label class="role-option-card" data-role-card="pr">
+          <input class="choice-radio" type="radio" name="roleAppliedFor" value="pr" required>
           <span class="role-option-step">The Step of Opportunity</span>
-          <strong>PR / Fundraising</strong>
-          <span>Builds relationships with sponsors, partners, and supporters so Resala can fund and expand its campaigns responsibly.</span>
+          <strong>PR</strong>
+          <span>Builds relationships with partners, campus communities, and external contacts so Resala can communicate professionally and open doors for collaboration.</span>
+        </label>
+      
+        <label class="role-option-card" data-role-card="fundraising">
+          <input class="choice-radio" type="radio" name="roleAppliedFor" value="fundraising" required>
+          <span class="role-option-step">The Step of Support</span>
+          <strong>Fundraising</strong>
+          <span>Plans fundraising campaigns, sets campaign goals, and identifies the right sponsor types only when sponsorship support is needed.</span>
         </label>
       
         <label class="role-option-card" data-role-card="visits">
@@ -190,7 +200,7 @@
         <label for="secondPreference">Second preference <span aria-hidden="true">*</span></label>
         <select id="secondPreference" name="secondPreference" required>
           <option value="">Select another role</option>
-          <option value="treasurer">Treasurer</option><option value="tech-director">Tech Director</option><option value="operations">Operations</option><option value="branding-media">Branding / Media</option><option value="hr">HR</option><option value="pr-fundraising">PR / Fundraising</option><option value="visits">Visits</option><option value="children-day-director">Children Day Director</option><option value="mothers-day-director">Mothers Day Director</option><option value="initiatives-director">Initiatives Director</option>
+          <option value="treasurer">Treasurer</option><option value="tech-director">Tech Director</option><option value="operations">Operations</option><option value="branding-media">Branding / Media</option><option value="hr">HR</option><option value="pr">PR</option><option value="fundraising">Fundraising</option><option value="visits">Visits</option><option value="children-day-director">Children Day Director</option><option value="mothers-day-director">Mothers Day Director</option><option value="initiatives-director">Initiatives Director</option>
         </select>
         <p class="field-helper">Choose the role you would most want after your first choice.</p>
         <p class="field-error" id="secondPreference-error" data-error-for="secondPreference"></p>
@@ -282,7 +292,10 @@
       </div>
       <p class="success-processing" data-success-processing>Your confirmation email and calendar invite are being prepared in the background.</p>
       <p>We'll contact you by email with your confirmation and what you should prepare for the interview.</p>
-      <a class="button button-secondary" href="../">Back to recruitment page</a>
+      <div class="success-actions">
+        <a class="button button-primary" href="../tasks/">Submit task links</a>
+        <a class="button button-secondary" href="../">Back to recruitment page</a>
+      </div>
     </section>
   
           </div>
