@@ -1695,6 +1695,42 @@ h3 {
   gap: 18px;
 }
 
+.application-attention-note {
+  display: grid;
+  gap: 8px;
+  padding: clamp(18px, 3vw, 24px);
+  border: 1px solid rgba(245, 166, 35, 0.48);
+  border-left: 5px solid var(--color-accent-orange);
+  border-radius: var(--radius);
+  background:
+    linear-gradient(180deg, rgba(255, 248, 237, 0.98), rgba(255, 255, 255, 0.94)),
+    linear-gradient(135deg, rgba(245, 166, 35, 0.1), rgba(39, 50, 138, 0.04));
+  box-shadow: 0 16px 36px rgba(149, 91, 17, 0.09);
+}
+
+.application-attention-note span {
+  color: #9a3a00;
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.application-attention-note strong {
+  color: var(--color-primary);
+  font-family: var(--font-serif);
+  font-size: clamp(1.2rem, 2.4vw, 1.65rem);
+  line-height: 1.16;
+}
+
+.application-attention-note p {
+  max-width: 62ch;
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 0.98rem;
+  line-height: 1.55;
+}
+
 .apply-card,
 .role-description-card,
 .success-state,
@@ -3661,6 +3697,7 @@ h3 {
   }
 
   .apply-card,
+  .application-attention-note,
   .role-description-card,
   .apply-side-panel,
   .success-state {

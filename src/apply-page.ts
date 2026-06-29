@@ -167,6 +167,12 @@ export function ApplicationForm(): string {
     <form class="application-form" data-application-form novalidate>
       <div class="form-error-summary" data-error-summary hidden role="alert"></div>
 
+      <aside class="application-attention-note" aria-label="Important application note">
+        <span>Important before you submit</span>
+        <strong>Read your confirmation email carefully after applying.</strong>
+        <p>It includes the details you need before your interview, and following it closely shows us that you pay attention to what matters.</p>
+      </aside>
+
       <section class="apply-card" aria-labelledby="basic-info-title">
         <div class="apply-card-heading">
           <span class="apply-step-number">01</span>

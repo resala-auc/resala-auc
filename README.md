@@ -57,7 +57,7 @@ slot-2026-06-22-1900 | 2026-06-22 | 7:00 PM | 8:00 PM | 2026-06-22 at 7:00 PM | 
 slot-2026-06-22-2000 | 2026-06-22 | 8:00 PM | 9:00 PM | 2026-06-22 at 8:00 PM | 1 | TRUE
 ```
 
-The generated sheet includes those three rows for every date through `2026-07-15`. Once a slot's start time passes in the `Africa/Cairo` timezone, the backend automatically hides it from the form. Older default half-hour rows such as `7:30 PM - 8:30 PM` are hidden by the backend to avoid overlaps.
+The generated sheet includes those three rows for every date through `2026-07-15`. Once a slot's start time passes in the `Africa/Cairo` timezone, the backend automatically hides it from the form. Same-day slots are also closed from 11:00 AM Cairo time so applicants have enough time to read and complete the next steps before the interview. Older default half-hour rows such as `7:30 PM - 8:30 PM` are hidden by the backend to avoid overlaps.
 
 Calendar setup:
 

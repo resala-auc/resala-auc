@@ -91,6 +91,7 @@ const DAILY_SLOT_TIMES = [
   { code: "1900", startTime: "7:00 PM" },
   { code: "2000", startTime: "8:00 PM" }
 ];
+const SAME_DAY_SLOT_CUTOFF_HOUR = 11;
 const REMOVED_OVERLAPPING_DEFAULT_SLOT_CODES = new Set(["1530", "1930", "2030"]);
 
 const corsHeaders = {
@@ -2257,6 +2258,7 @@ async function getInterviewSlots(token: string): Promise<InterviewSlotOption[]> 
       const startDateTime = buildLocalDateTime(date, startTime);
       const endDateTime = buildLocalDateTime(date, endTime);
       const past = isPastLocalDateTime(startDateTime, CALENDAR_TIME_ZONE);
+      const sameDayCutoffReached = isSameDaySlotCutoffReached(date, CALENDAR_TIME_ZONE);
 
       return {
         id,
@@ -2270,7 +2272,7 @@ async function getInterviewSlots(token: string): Promise<InterviewSlotOption[]> 
         active,
         reservedCount,
         remaining,
-        full: !active || !date || !startTime || !startDateTime || !endDateTime || past || remaining <= 0,
+        full: !active || !date || !startTime || !startDateTime || !endDateTime || past || sameDayCutoffReached || remaining <= 0,
         calendarEventId,
         meetLink,
         rowIndex: index + 2
@@ -2705,6 +2707,16 @@ function normalizeTime24(value: unknown): string {
 function isPastLocalDateTime(value: string, timeZone: string): boolean {
   if (!value) return false;
   return value <= getCurrentLocalDateTime(timeZone);
+}
+
+function isSameDaySlotCutoffReached(date: string, timeZone: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return false;
+
+  const currentLocalDateTime = getCurrentLocalDateTime(timeZone);
+  const currentDate = currentLocalDateTime.slice(0, 10);
+  if (date !== currentDate) return false;
+
+  return currentLocalDateTime >= `${date}T${String(SAME_DAY_SLOT_CUTOFF_HOUR).padStart(2, "0")}:00:00`;
 }
 
 function parseTime(value: string): string {
