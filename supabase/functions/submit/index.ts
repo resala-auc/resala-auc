@@ -514,6 +514,10 @@ function authorizeAdminReset(request: Request): void {
   }
 }
 
+function isValidAucEmail(value: unknown): boolean {
+  return /^[A-Za-z0-9._%+-]+@aucegypt\.edu$/i.test(String(value ?? "").trim());
+}
+
 function validateApplication(payload: ApplicationPayload): void {
   const requiredFields: Array<keyof ApplicationPayload> = [
     "timestamp",
@@ -538,7 +542,7 @@ function validateApplication(payload: ApplicationPayload): void {
     throw new Error(`Missing required fields: ${missing.join(", ")}.`);
   }
 
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payload.aucEmail)) {
+  if (!isValidAucEmail(payload.aucEmail)) {
     throw new Error("Invalid AUC email.");
   }
 
@@ -565,7 +569,7 @@ function validateTaskSubmission(payload: TaskSubmissionPayload): void {
     throw new Error(`Missing required fields: ${missing.join(", ")}.`);
   }
 
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payload.aucEmail)) {
+  if (!isValidAucEmail(payload.aucEmail)) {
     throw new Error("Invalid AUC email.");
   }
 

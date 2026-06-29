@@ -952,11 +952,14 @@
         <td><input type="number" class="score-num" id="s2-${r.rowIndex}" min="0" max="100" step="0.5" value="${escHtml(r.secondPreferenceScore)}" placeholder="—"></td>
         <td><input type="url" class="url-input" id="notes-${r.rowIndex}" value="${escHtml(r.notesUrl)}" placeholder="Paste doc URL"></td>
         <td>
-          <button class="btn btn-primary btn-sm" id="save-btn-${r.rowIndex}" onclick="saveScore(${r.rowIndex},'${escHtml(r.aucEmail)}')">Save</button>
+          <button type="button" class="btn btn-primary btn-sm score-save-btn" id="save-btn-${r.rowIndex}" data-row-index="${escHtml(r.rowIndex)}">Save</button>
           <div class="row-notice" id="rn-${r.rowIndex}"></div>
         </td>
       </tr>
     `).join('');
+    tbody.querySelectorAll('.score-save-btn').forEach(button => {
+      button.addEventListener('click', () => saveScore(Number(button.dataset.rowIndex)));
+    });
   }
 
   function filterScore() {
@@ -972,17 +975,22 @@
     document.getElementById('app-count').textContent = `${rows.length} of ${allApplicants.length} applicants`;
   }
 
-  async function saveScore(rowIndex, aucEmail) {
+  async function saveScore(rowIndex) {
     const notesUrl            = document.getElementById(`notes-${rowIndex}`)?.value.trim() ?? '';
     const firstPreferenceScore  = document.getElementById(`s1-${rowIndex}`)?.value.trim() ?? '';
     const secondPreferenceScore = document.getElementById(`s2-${rowIndex}`)?.value.trim() ?? '';
     const btn = document.getElementById(`save-btn-${rowIndex}`);
+    const app = allApplicants.find(a => a.rowIndex === rowIndex);
+    if (!app?.aucEmail) {
+      showRowNotice(rowIndex, 'Applicant email not found.', '#991b1b');
+      return;
+    }
+
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner"></span>';
 
     try {
-      await apiFetch({ mode: 'admin-update-score', aucEmail, notesUrl, firstPreferenceScore, secondPreferenceScore });
-      const app = allApplicants.find(a => a.rowIndex === rowIndex);
+      await apiFetch({ mode: 'admin-update-score', aucEmail: app.aucEmail, notesUrl, firstPreferenceScore, secondPreferenceScore });
       if (app) { app.notesUrl = notesUrl; app.firstPreferenceScore = firstPreferenceScore; app.secondPreferenceScore = secondPreferenceScore; }
       showRowNotice(rowIndex, '✓ Saved', '#166534');
     } catch (err) {

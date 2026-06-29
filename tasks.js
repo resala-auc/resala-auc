@@ -16,7 +16,7 @@ function getValue(id        )         {
 }
 
 function isValidEmail(value        )          {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+  return /^[A-Za-z0-9._%+-]+@aucegypt\.edu$/i.test(value);
 }
 
 function isValidUrl(value        )          {
@@ -51,7 +51,7 @@ function validateForm()             {
   if (!getValue("aucEmail")) {
     errors.aucEmail = "AUC email is required.";
   } else if (!isValidEmail(getValue("aucEmail"))) {
-    errors.aucEmail = "Enter a valid email address.";
+    errors.aucEmail = "Enter a valid AUC email address.";
   }
 
   if (!getValue("studentId")) {
